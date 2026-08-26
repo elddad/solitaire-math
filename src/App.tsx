@@ -7,16 +7,31 @@ import { Board } from './components/Board';
 import { BoosterRow } from './components/Boosters';
 import { Hud } from './components/Hud';
 import { AdBanner, EndPanel, MenuPanel, Toast } from './components/Overlays';
+import { LevelSelect } from './components/LevelSelect';
+import * as Progress from './game/progress';
+import { TOTAL_LEVELS } from './game/campaign';
 import { SHOW_AD, STAGE_H, STAGE_W } from './layout';
 
-/** Dev flag: ?seed=xyz swaps the deal; the default is the reference recording. */
-const SEED = new URLSearchParams(location.search).get('seed') ?? 'recording';
+const params = new URLSearchParams(location.search);
+/** Dev flags: ?level=n jumps straight to a level, ?seed=xyz fixes the shuffle. */
+const START_LEVEL = Math.max(1, Math.min(TOTAL_LEVELS, Number(params.get('level')) || 0));
+const SEED_OVERRIDE = params.get('seed') ?? undefined;
+
+function openingLevel(): number {
+  if (START_LEVEL) return START_LEVEL;
+  const saved = Progress.load().current;
+  return Math.max(1, Math.min(TOTAL_LEVELS, saved));
+}
 
 export default function App() {
-  const [state, dispatch] = useReducer(reducer, SEED, newLevel);
+  const [progress, setProgress] = useState(Progress.load);
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    newLevel(openingLevel(), SEED_OVERRIDE));
   const [menuOpen, setMenuOpen] = useState(false);
-  const [sound, setSound] = useState(true);
-  const [vibrate, setVibrate] = useState(true);
+  const [levelsOpen, setLevelsOpen] = useState(false);
+  const [sound, setSound] = useState(progress.sound);
+  const [vibrate, setVibrate] = useState(progress.vibrate);
+  const scored = useRef<number | null>(null);
   const [jokerArmed, setJokerArmed] = useState(false);
   const [shakingId, setShakingId] = useState<string | null>(null);
   const [scale, setScale] = useState(0.28);
@@ -38,7 +53,7 @@ export default function App() {
     };
   }, []);
 
-  const paused = menuOpen || state.phase !== 'playing';
+  const paused = menuOpen || levelsOpen || state.phase !== 'playing';
   useEffect(() => {
     if (paused) return;
     const id = window.setInterval(() => dispatch({ type: 'tick' }), 1000);
@@ -64,6 +79,25 @@ export default function App() {
     const id = window.setTimeout(() => dispatch({ type: 'clearHint' }), 2000);
     return () => window.clearTimeout(id);
   }, [state.hint]);
+
+  useEffect(() => {
+    if (state.phase === 'playing') { scored.current = null; return; }
+    if (scored.current === state.level) return;          // score a level once
+    scored.current = state.level;
+    if (state.phase === 'won') {
+      const stars = Progress.starsFor(state.moves, state.movesMax);
+      setProgress(Progress.recordWin(state.level, stars, 100 + state.moves * 2));
+    } else {
+      setProgress(Progress.recordLoss(state.level));
+    }
+  }, [state.phase, state.level, state.moves, state.movesMax]);
+
+  const goToLevel = useCallback((level: number) => {
+    setMenuOpen(false);
+    setLevelsOpen(false);
+    setJokerArmed(false);
+    dispatch({ type: 'replace', state: newLevel(level, level === state.level ? SEED_OVERRIDE : undefined) });
+  }, [state.level]);
 
   const buzz = useCallback((ms: number) => {
     if (vibrate && navigator.vibrate) navigator.vibrate(ms);
@@ -163,13 +197,14 @@ export default function App() {
     return false;
   }, [state]);
 
-  const restart = () => { setMenuOpen(false); setJokerArmed(false); dispatch({ type: 'restart' }); };
+  const replay = () => goToLevel(state.level);
+  const next = () => goToLevel(Math.min(TOTAL_LEVELS, state.level + 1));
 
   return (
     <div className="viewport">
       <div className="stage" style={{ transform: `scale(${scale})` }}>
         <Hud
-          coins={state.coins} lives={state.lives} secondsLeft={state.secondsLeft}
+          coins={progress.coins} lives={progress.lives} secondsLeft={state.secondsLeft}
           level={state.level} moves={state.moves} movesMax={state.movesMax}
           onMenu={() => setMenuOpen(true)}
         />
@@ -194,14 +229,18 @@ export default function App() {
         />
         <AdBanner visible={SHOW_AD} />
         <Toast toast={state.toast} />
-        <EndPanel state={state} onNext={restart} onReplay={restart} onMenu={() => setMenuOpen(true)} />
+        <EndPanel state={state} onNext={next} onReplay={replay} onMenu={() => setLevelsOpen(true)} />
         <MenuPanel
           open={menuOpen} sound={sound} vibrate={vibrate}
           onResume={() => setMenuOpen(false)}
-          onRestart={restart}
-          onToggleSound={() => setSound((v) => !v)}
-          onToggleVibrate={() => setVibrate((v) => !v)}
+          onRestart={replay}
+          onLevels={() => { setMenuOpen(false); setLevelsOpen(true); }}
+          onToggleSound={() => setSound((v) => { Progress.save({ ...progress, sound: !v }); return !v; })}
+          onToggleVibrate={() => setVibrate((v) => { Progress.save({ ...progress, vibrate: !v }); return !v; })}
         />
+        {levelsOpen && (
+          <LevelSelect progress={progress} onPick={goToLevel} onClose={() => setLevelsOpen(false)} />
+        )}
       </div>
     </div>
   );

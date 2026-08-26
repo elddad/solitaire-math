@@ -40,7 +40,7 @@ check('64 cards total', equationCount + totals.length === 64);
 check('every expression equals its category', poolOk);
 
 // ---------------------------------------------------------------------- 1 & 2
-let s = newLevel('recording');
+let s = newLevel(5, 'recording');
 step(1, 'Opening board');
 check('125 moves', s.moves === 125, String(s.moves));
 check('25:00 on the clock', s.secondsLeft === 1500, String(s.secondsLeft));
@@ -153,7 +153,7 @@ check('the deposited card answers 15', s.foundations[0].deposited[0].value === 1
 // ------------------------------------------------------------------------- 11
 step(11, 'A four-card group enters its foundation in one move');
 {
-  let t = newLevel('recording');
+  let t = newLevel(5, 'recording');
   // build a clean state: foundation 0 holds category 14, column 0 holds four 14s
   const fours = ['16-2', '7+7', '2X7', '28/2'];
   t = JSON.parse(JSON.stringify(t));
@@ -196,7 +196,7 @@ step(11, 'A four-card group enters its foundation in one move');
 // ------------------------------------------------------------------------- 13
 step(13, 'The stock can be restored from the waste');
 {
-  let t = newLevel('recording');
+  let t = newLevel(5, 'recording');
   let guard = 0;
   while (t.stock.length && guard++ < 100) t = run(t, { type: 'draw' });
   check('stock is empty', t.stock.length === 0);
@@ -208,14 +208,14 @@ step(13, 'The stock can be restored from the waste');
   check('restoring cost one move', t.moves === before - 1);
   check('no card was lost',
     t.stock.length + t.waste.length === wasteSize, String(t.stock.length + t.waste.length));
-  const empty = run(newLevel('recording'), { type: 'restore' });
+  const empty = run(newLevel(5, 'recording'), { type: 'restore' });
   check('restore does nothing while the stock still has cards', empty.moves === 125);
 }
 
 // ------------------------------------------------------------------------- 14
 step(14, 'The level can actually be completed');
 {
-  const result = solve(newLevel('recording'));
+  const result = solve(newLevel(5, 'recording'));
   console.log('    recording seed: ' + (result.won ? 'WON' : result.phase) +
     ' using ' + result.movesUsed + ' of 125 moves, ' + result.restores + ' restores, ' +
     result.cardsLeft + ' cards left, sets open: ' + (result.openSets.join(' ') || 'none'));
@@ -225,14 +225,14 @@ step(14, 'The level can actually be completed');
   // level searches shuffle variants of its seed until one is provably winnable.
   let raw = 0;
   const samples = 30;
-  for (let i = 0; i < samples; i++) if (solve(createGame('seed-' + i)).won) raw++;
+  for (let i = 0; i < samples; i++) if (solve(createGame(5, 'seed-' + i, { moves: 125 })).won) raw++;
   console.log('    raw shuffles: ' + raw + '/' + samples + ' winnable before the search');
 
   let dealt = 0;
   const spare: number[] = [];
   for (let i = 0; i < samples; i++) {
-    const d = dealSolvable('seed-' + i);
-    if (d.verified) { dealt++; spare.push(d.movesToSpare); }
+    const d = dealSolvable(5, 'seed-' + i);
+    if (d.verified) { dealt++; spare.push((125 - d.solverMoves)); }
   }
   const avgSpare = spare.length ? Math.round(spare.reduce((a, b) => a + b, 0) / spare.length) : 0;
   console.log('    after the search: ' + dealt + '/' + samples + ' verified, average ' +
@@ -243,7 +243,7 @@ step(14, 'The level can actually be completed');
 // -------------------------------------------------------------- bug guardrails
 step(15, 'Guardrails');
 {
-  let t = newLevel('recording');
+  let t = newLevel(5, 'recording');
   const ids = () => {
     const seen: string[] = [];
     t.columns.forEach((c) => c.cards.forEach((x) => seen.push(x.id)));
@@ -270,7 +270,7 @@ step(15, 'Guardrails');
   check('no foundation exceeds its quota',
     t.foundations.every((f) => f.quota === 0 || f.progress <= f.quota));
 
-  let u = newLevel('recording');
+  let u = newLevel(5, 'recording');
   u = run(u, { type: 'draw' });
   const drawnId = u.waste[0].id;
   u = run(u, { type: 'move', source: { from: 'waste' }, destination: { to: 'column', col: 2 } });
@@ -283,20 +283,20 @@ step(15, 'Guardrails');
   check('undo restored the move counter', u.moves === 124, String(u.moves));
   check('undo spent a charge', u.boosters.undo === 2, String(u.boosters.undo));
 
-  let v = newLevel('recording');
+  let v = newLevel(5, 'recording');
   const emptyStock = { ...v, stock: [] };
   check('cannot draw from an empty stock', run(emptyStock, { type: 'draw' }).moves === 125);
   v = { ...v, boosters: { ...v.boosters, joker: 0 } };
   check('a spent joker cannot be reused',
     run(v, { type: 'joker', slot: 0 }).boosters.joker === 0);
-  check('a face-down card cannot be moved', movableCount(newLevel('recording'), 0) === 1);
+  check('a face-down card cannot be moved', movableCount(newLevel(5, 'recording'), 0) === 1);
 }
 
 
 // ------------------------------------------------------- booster bookkeeping
 step(16, 'Boosters');
 {
-  let t = newLevel('recording');
+  let t = newLevel(5, 'recording');
   t = run(t, { type: 'draw' });
   t = run(t, { type: 'move', source: { from: 'waste' }, destination: { to: 'column', col: 2 } });
   t = run(t, { type: 'draw' });                                   // gold category 10
@@ -330,7 +330,7 @@ step(16, 'Boosters');
 
   // Build a board the magnet definitely has work on: category 8 seated, and
   // two exposed 8s waiting in the tableau.
-  let m: GameState = JSON.parse(JSON.stringify(newLevel('recording')));
+  let m: GameState = JSON.parse(JSON.stringify(newLevel(5, 'recording')));
   const pile = [...m.columns.flatMap((c) => c.cards), ...m.stock];
   const gold8 = pile.find((c) => c.kind === 'category' && c.value === 8)!;
   const eights = ['2X4', '8X1', '16/2'].map((e) => pile.find((c) => c.expression === e)!);

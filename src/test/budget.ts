@@ -2,7 +2,7 @@ import { createGame } from '../game/deck';
 import { solve } from '../game/solver';
 
 /* Where does the 125-move budget actually go? */
-const r = solve(createGame('recording'));
+const r = solve(createGame(5, 'recording', { moves: 125 }));
 console.log('recording seed:');
 console.log('  result      ', r.phase, r.won ? '' : '(' + r.cardsLeft + ' cards left)');
 console.log('  moves used  ', r.movesUsed, 'of 125');
@@ -18,7 +18,7 @@ console.log('');
 
 let won = 0; const used: number[] = []; const left: number[] = [];
 for (let i = 0; i < 60; i++) {
-  const s = solve(createGame('probe-' + i));
+  const s = solve(createGame(5, 'probe-' + i, { moves: 125 }));
   if (s.won) { won++; used.push(s.movesUsed); } else left.push(s.cardsLeft);
 }
 const avg = (a: number[]) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0);

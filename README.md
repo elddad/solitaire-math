@@ -23,12 +23,17 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:5173. `?seed=anything` deals a different board;
-the default `recording` seed reproduces the reference layout exactly.
+Then open http://localhost:5173. `?level=n` jumps to any level and
+`?seed=anything` deals a different shuffle of it; level 5 with its default seed
+reproduces the reference layout exactly.
 
 ```bash
-npm run accept     # the full 16-section acceptance test
-npm run build      # production build into docs/
+npm run accept       # the 16-section acceptance test for the reference level
+npm run progression  # unlocking, stars, and the difficulty curve
+npm run verify       # replay all 500 levels from the shipped manifest
+npm run campaign     # deal and solve every level from scratch (slow)
+npm run manifest     # regenerate the verified level table (~2 min)
+npm run build        # production build into docs/
 ```
 
 ## How it plays
@@ -45,26 +50,50 @@ npm run build      # production build into docs/
 
 Every successful action costs one move. Level 5 gives 125 moves and 25 minutes.
 
-## The move budget is the real puzzle
+## 500 levels
 
-A 64-card deal has a hard floor: 42 stock cards each need a draw, and all 64
-cards need at least one move to place. That is **106 moves before a single card
-is re-handled**, against a budget of 125. Only about 19 moves of slack exist for
-parking cards and reopening the stock.
+Ten worlds of fifty, and every knob turns one way:
 
-That makes many shuffles genuinely unwinnable. Measured over 30 random shuffles,
-only **16 could be finished** inside 125 moves.
+| Levels | World | Maths | Cards | Sets |
+|---|---|---|---|---|
+| 1-50 | First Sums | `+` `-` to 12 | ~20 | 5 |
+| 51-100 | Bigger Sums | `+` `-` to 18 | ~24 | 6 |
+| 101-150 | Times Tables | `X` joins in | ~24 | 6 |
+| 151-200 | Sharing Out | `/` joins in | ~35 | 7 |
+| 201-250 | All Four | every operation | ~35 | 7 |
+| 251-300 | Deep Deal | deeper columns | ~40 | 8 |
+| 301-350 | Crowded Table | nine sets, four slots | ~50 | 9 |
+| 351-400 | Big Numbers | operands to 99 | ~65 | 10 |
+| 401-450 | Under Pressure | less clock, less slack | ~70 | 10 |
+| 451-500 | Number Master | everything at once | ~77 | 11 |
 
-So the level does not trust a shuffle. `src/game/level.ts` deals, runs a solver
-over the result, and keeps the first shuffle the solver can finish — searching
-variants of the seed until it finds one with moves to spare. Same seed, same
-board, every time, and **every board that reaches a player is provably
-winnable** (30/30 after the search, averaging 15 moves to spare). The reference
-deal is cleared in 111 of its 125 moves.
+Level 1 deals 20 cards, 5 sets and 30 spare moves. Level 500 deals 77 cards,
+11 sets and 9 spare moves. Sets also grow: three cards each early, up to seven
+late, so a single set can occupy a slot for a long stretch while the other
+categories pile up behind it.
 
-The pinned cards from the brief survive the search: the exposed row is always
-`16-2 / 7+7 / 2X4 / 18/2`, the gold category-15 card always sits directly under
-`16-2`, and the stock always starts `8X1`, gold-10, `15-3`.
+Level 5 is left exactly as the brief specifies: the hand-authored 64-card
+reference deck, 125 moves, 25:00 - so the acceptance test keeps its meaning.
+
+## Every level is verified winnable
+
+A deal has a hard floor: every stock card needs a draw and every card needs at
+least one move to place. A budget that looks generous can still be impossible,
+and with only four foundation slots against ten or more categories a board can
+deadlock outright. Measured on the reference level, only **16 of 30 random
+shuffles** could be finished inside 125 moves.
+
+So no shuffle is trusted. `npm run manifest` deals each level, plays it through
+with a solver, and keeps the first shuffle the solver can finish - shaving a
+category if a level cannot be made winnable at its intended size. The winning
+seed, its move budget and its category count ship in `src/game/manifest.ts`.
+
+That search costs about two minutes for the campaign, which is why it happens
+at build time: starting a level at runtime is then just a shuffle, **0.1 ms on
+average and under 1 ms at worst**.
+
+`npm run verify` replays all 500 levels straight from the shipped manifest:
+**500/500 winnable, 0 equation errors**, averaging 18 spare moves.
 
 ## Layout
 
@@ -83,7 +112,11 @@ src/game/deck.ts      the level 5 deck, the equation pool, the deal
 src/game/rules.ts     group detection and every move validation
 src/game/engine.ts    the reducer: one action in, new state out
 src/game/solver.ts    heuristic player used to verify a deal (not shipped logic)
-src/game/level.ts     deal, verify, retry until the board is winnable
+src/game/campaign.ts  the 500-level difficulty curve
+src/game/expressions.ts  procedural equation cards per world
+src/game/manifest.ts  GENERATED: the verified seed for every level
+src/game/level.ts     deal a level from the manifest, or verify one on the spot
+src/game/progress.ts  unlocked levels, stars and coins in localStorage
 src/layout.ts         every reference-canvas coordinate
 src/components/       Hud, Board, Boosters, Overlays, Card, Icons
 src/test/acceptance.ts  the acceptance test

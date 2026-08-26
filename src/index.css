@@ -405,3 +405,43 @@ body {
 /* Inside a foundation the progress dots own the bottom strip, so the
    "0 / 8" line sits above them rather than on top of them. */
 .slot .gold-quota { bottom: 56px; }
+
+/* ------------------------------------------------------- level select */
+.scrim.levels { align-items: flex-start; padding-top: 180px; }
+.levels-panel {
+  width: 1160px; padding: 44px 40px 36px;
+  border-radius: 48px;
+  background: linear-gradient(180deg, #199A4F, #0C6E36);
+  border: 8px solid rgba(255,255,255,.25);
+  box-shadow: 0 20px 0 rgba(3,45,22,.5);
+  color: #fff;
+}
+.levels-panel header { display: flex; align-items: center; gap: 20px; margin-bottom: 26px; }
+.levels-panel header > div { flex: 1; text-align: center; }
+.levels-panel h2 { margin: 0; font-size: 62px; }
+.levels-panel p { margin: 4px 0 0; font-size: 38px; opacity: .8; }
+.round-btn {
+  width: 96px; height: 96px; border-radius: 50%; border: 0; flex: none;
+  background: #fff; color: #12693A; font-size: 58px; font-family: inherit;
+  cursor: pointer; box-shadow: 0 7px 0 rgba(3,60,27,.4); line-height: 1;
+}
+.round-btn:disabled { opacity: .35; box-shadow: none; cursor: default; }
+.levels-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;
+  max-height: 1180px; overflow-y: auto; padding: 4px;
+}
+.level-chip {
+  aspect-ratio: 1; border: 0; border-radius: 28px; cursor: pointer;
+  background: linear-gradient(180deg, #39b273, #1c7d4b);
+  color: #fff; font-family: inherit;
+  box-shadow: 0 7px 0 #135c37;
+  display: grid; place-content: center; gap: 4px; padding: 0;
+}
+.level-chip b { font-size: 52px; }
+.level-chip span { font-size: 22px; color: #FFE066; height: 24px; letter-spacing: 2px; }
+.level-chip.done { background: linear-gradient(180deg, #4ac785, #22935a); }
+.level-chip.next { outline: 7px solid #FFE066; outline-offset: 2px; }
+.level-chip.locked { background: rgba(255,255,255,.12); color: rgba(255,255,255,.35); box-shadow: none; cursor: default; }
+.levels-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 30px; }
+.levels-foot span { font-size: 46px; color: #FFE066; }
+.levels-foot .btn { width: 300px; margin: 0; }

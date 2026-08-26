@@ -1,5 +1,4 @@
 import type { Card, Destination, GameState, Source } from './types';
-import { createGame } from './deck';
 import {
   availableSources, checkMove, destinationsFor, movableCount, sourceCards,
 } from './rules';
@@ -19,7 +18,10 @@ export type Action =
   | { type: 'tick' }
   | { type: 'finishFoundation'; slot: number }
   | { type: 'unlock' }
-  | { type: 'restart' };
+  /** Swap in a freshly dealt level. Built outside the reducer so the engine
+      does not have to depend on the level dealer, which depends on the solver,
+      which depends on the engine. */
+  | { type: 'replace'; state: GameState };
 
 let toastId = 0;
 
@@ -69,7 +71,11 @@ function removeSource(next: GameState, source: Source): Card[] {
 function everythingDone(state: GameState): boolean {
   const cardsLeft =
     state.columns.reduce((n, c) => n + c.cards.length, 0) + state.stock.length + state.waste.length;
-  return cardsLeft === 0 && !state.foundations.some((f) => f.card !== null);
+  // A set that has just filled up is already won -- it is only waiting for its
+  // clear animation. Counting it as open would lose the level on the very move
+  // that finished it, whenever that move was also the last one.
+  const stillOpen = state.foundations.some((f) => f.card !== null && !f.completing);
+  return cardsLeft === 0 && !stillOpen;
 }
 
 function settle(state: GameState): GameState {
@@ -248,8 +254,8 @@ export function reducer(state: GameState, action: Action): GameState {
     case 'unlock':
       return state.locked ? { ...state, locked: false } : state;
 
-    case 'restart':
-      return createGame(state.seedName);
+    case 'replace':
+      return action.state;
   }
 }
 

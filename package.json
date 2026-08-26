@@ -8,7 +8,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "accept": "tsx src/test/acceptance.ts"
+    "accept": "tsx src/test/acceptance.ts",
+    "manifest": "tsx src/test/build-manifest.ts",
+    "campaign": "tsx src/test/campaign.ts",
+    "progression": "tsx src/test/progression.ts",
+    "verify": "tsx src/test/verify-manifest.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

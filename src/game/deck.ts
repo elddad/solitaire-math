@@ -1,7 +1,9 @@
 import type { Card, Column, GameState } from './types';
 import { mulberry32, hashString, shuffle } from './rng';
+import { levelConfig, worldName } from './campaign';
+import { pickCategories } from './expressions';
 
-/** Level 5: ten categories, 54 equation cards, one gold card each. */
+/** Level 5 is the hand-authored reference deck from the recording. */
 export const CATEGORY_POOL: Record<number, string[]> = {
   5: ['3+2', '10-5', '5X1'],
   6: ['3X2', '12/2', '10-4'],
@@ -16,6 +18,7 @@ export const CATEGORY_POOL: Record<number, string[]> = {
 };
 
 export const CATEGORY_VALUES = Object.keys(CATEGORY_POOL).map(Number).sort((a, b) => a - b);
+export const REFERENCE_LEVEL = 5;
 
 /** Evaluate an expression written with X for times and / for divide. */
 export function evaluate(expression: string): number {
@@ -39,9 +42,10 @@ function categoryCard(value: number, quota: number): Card {
   return { id: `c${counter++}`, kind: 'category', value, quota };
 }
 
-/** Every card in the level 5 deck: 54 white + 10 gold = 64. */
-export function buildDeck(): { equations: Card[]; categories: Card[] } {
-  counter = 0;
+export interface BuiltDeck { equations: Card[]; categories: Card[] }
+
+/** The reference deck: 54 white cards and 10 gold, 64 in total. */
+function referenceDeck(): BuiltDeck {
   const equations: Card[] = [];
   const categories: Card[] = [];
   for (const value of CATEGORY_VALUES) {
@@ -52,9 +56,28 @@ export function buildDeck(): { equations: Card[]; categories: Card[] } {
   return { equations, categories };
 }
 
-const COLUMN_SIZES = [4, 5, 6, 7];
+/** Any other level: categories and expressions drawn from its world's rules. */
+function generatedDeck(level: number, rand: () => number, categoryCount?: number): BuiltDeck {
+  const cfg = levelConfig(level);
+  const count = Math.max(3, categoryCount ?? cfg.categories);
+  const chosen = pickCategories(count, cfg.quotaFor, cfg.ops, cfg.limits, cfg.values, rand);
+  const equations: Card[] = [];
+  const categories: Card[] = [];
+  for (const c of chosen) {
+    categories.push(categoryCard(c.value, c.pool.length));
+    for (const expression of c.pool) equations.push(equationCard(expression));
+  }
+  return { equations, categories };
+}
 
-/** The exposed cards the recording starts with, one per column. */
+export function buildDeck(level: number, rand: () => number, categoryCount?: number): BuiltDeck {
+  counter = 0;
+  return level === REFERENCE_LEVEL ? referenceDeck() : generatedDeck(level, rand, categoryCount);
+}
+
+/* ------------------------------------------------------------------ dealing */
+
+/** The exposed cards the reference recording starts with, one per column. */
 const OPENERS = ['16-2', '7+7', '2X4', '18/2'];
 /** The first three cards the recording draws from the stock. */
 const FIRST_DRAWS: Array<{ expression?: string; category?: number }> = [
@@ -63,10 +86,7 @@ const FIRST_DRAWS: Array<{ expression?: string; category?: number }> = [
   { expression: '15-3' },
 ];
 
-export interface Deal {
-  columns: Column[];
-  stock: Card[];
-}
+export interface Deal { columns: Column[]; stock: Card[] }
 
 function take<T>(pool: T[], match: (item: T) => boolean): T {
   const i = pool.findIndex(match);
@@ -75,25 +95,24 @@ function take<T>(pool: T[], match: (item: T) => boolean): T {
 }
 
 /**
- * Deal the level.
- *
- * The "recording" seed reproduces the reference layout exactly: the four
- * exposed cards, the gold category-15 card hidden directly beneath 16-2, and
- * the first three stock cards. Every other card is shuffled from the seed, so
- * the same seed always produces the same board.
+ * Deal a level. The seed name fixes the shuffle, so the same seed always
+ * produces the same board. On level 5 the "recording" seed also pins the four
+ * exposed cards, the gold category-15 card hidden under 16-2, and the first
+ * three stock cards; everything else is shuffled from the seed.
  */
-export function deal(seedName: string): Deal {
-  const { equations, categories } = buildDeck();
+export function deal(level: number, seedName: string, categoryCount?: number): Deal {
   const rand = mulberry32(hashString(seedName));
-  // 'recording' and 'recording#7' both use the reference layout; the suffix
-  // only varies the shuffle of the cards that are not pinned by the brief.
-  const recording = seedName.split('#')[0] === 'recording';
+  const { equations, categories } = buildDeck(level, rand, categoryCount);
+  const cfg = levelConfig(level);
+  // The reference level keeps the recording's own 4/5/6/7 deal.
+  const sizes = level === REFERENCE_LEVEL ? [4, 5, 6, 7] : cfg.columns;
+  const pinned = level === REFERENCE_LEVEL && seedName.split('#')[0] === 'recording';
 
   const pool: Card[] = [...equations, ...categories];
   const columns: Column[] = [];
   let stock: Card[] = [];
 
-  if (recording) {
+  if (pinned) {
     const openers = OPENERS.map((e) => take(pool, (c) => c.expression === e));
     const gold15 = take(pool, (c) => c.kind === 'category' && c.value === 15);
     const draws = FIRST_DRAWS.map((d) =>
@@ -101,14 +120,12 @@ export function deal(seedName: string): Deal {
         ? take(pool, (c) => c.expression === d.expression)
         : take(pool, (c) => c.kind === 'category' && c.value === d.category)
     );
-
     const rest = shuffle(pool, rand);
     let at = 0;
     for (let col = 0; col < 4; col++) {
-      const size = COLUMN_SIZES[col];
+      const size = sizes[col];
       const cards: Card[] = [];
-      // column 1 hides the gold 15 directly under its exposed card
-      const hidden = col === 0 ? size - 2 : size - 1;
+      const hidden = col === 0 ? size - 2 : size - 1;   // column 1 hides the gold 15
       for (let i = 0; i < hidden; i++) cards.push(rest[at++]);
       if (col === 0) cards.push(gold15);
       cards.push(openers[col]);
@@ -119,10 +136,9 @@ export function deal(seedName: string): Deal {
     const rest = shuffle(pool, rand);
     let at = 0;
     for (let col = 0; col < 4; col++) {
-      const size = COLUMN_SIZES[col];
-      const cards = rest.slice(at, at + size);
+      const size = Math.min(sizes[col], Math.max(1, rest.length - at - 2));
+      columns.push({ cards: rest.slice(at, at + size), downCount: Math.max(0, size - 1) });
       at += size;
-      columns.push({ cards, downCount: size - 1 });
     }
     stock = rest.slice(at);
   }
@@ -130,18 +146,24 @@ export function deal(seedName: string): Deal {
   return { columns, stock };
 }
 
-export const LEVEL5 = {
-  level: 5,
-  moves: 125,
-  seconds: 25 * 60,
-  coins: 354,
-  lives: 4,
-};
+export const REFERENCE_MOVES = 125;
+export const REFERENCE_SECONDS = 25 * 60;
 
-export function createGame(seedName: string): GameState {
-  const { columns, stock } = deal(seedName);
+export interface GameOptions {
+  moves?: number; seconds?: number; coins?: number; lives?: number;
+  /** Deal fewer categories than the curve asks for (used to rescue a level). */
+  categories?: number;
+}
+
+export function createGame(level: number, seedName: string, options: GameOptions = {}): GameState {
+  const { columns, stock } = deal(level, seedName, options.categories);
+  const cfg = levelConfig(level);
+  const cards = columns.reduce((n, c) => n + c.cards.length, 0) + stock.length;
+  const seconds = options.seconds ??
+    (level === REFERENCE_LEVEL ? REFERENCE_SECONDS : Math.round(cards * cfg.timePerCard));
+
   return {
-    level: LEVEL5.level,
+    level,
     columns,
     foundations: Array.from({ length: 4 }, () => ({
       card: null, value: 0, quota: 0, progress: 0, deposited: [], completing: false,
@@ -149,11 +171,11 @@ export function createGame(seedName: string): GameState {
     stock,
     waste: [],
     selected: null,
-    moves: LEVEL5.moves,
-    movesMax: LEVEL5.moves,
-    secondsLeft: LEVEL5.seconds,
-    coins: LEVEL5.coins,
-    lives: LEVEL5.lives,
+    moves: options.moves ?? REFERENCE_MOVES,
+    movesMax: options.moves ?? REFERENCE_MOVES,
+    secondsLeft: seconds,
+    coins: options.coins ?? 354,
+    lives: options.lives ?? 4,
     boosters: { hint: 3, undo: 3, magnet: 3, calculator: 3, joker: 3 },
     history: [],
     phase: 'playing',
@@ -164,3 +186,5 @@ export function createGame(seedName: string): GameState {
     seedName,
   };
 }
+
+export { worldName };
