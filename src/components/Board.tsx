@@ -138,6 +138,7 @@ function Tableau({ state, showValues, onTapPile, shakingId, flippingIds }: Board
                     card.kind === 'equation' &&
                     ((inGroup && groupSize > 1) || (showValues && !faceDown))
                   }
+                  covered={i < n - 1}
                   selected={sameSource(state.selected, source)}
                   hinted={hintedSource(state.hint, source)}
                   shaking={shakingId === card.id}

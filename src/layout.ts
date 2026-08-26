@@ -23,7 +23,7 @@ export const TABLEAU_Y = 985;
 /** Face-down cards in a column overlap by this much. */
 export const STACK_STEP = 61;
 /** A face-up matched card shows a slightly taller header. */
-export const STACK_STEP_UP = 74;
+export const STACK_STEP_UP = 86;
 
 export const TRAY_X = 83;
 export const TRAY_Y = 1892;

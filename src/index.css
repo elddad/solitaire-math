@@ -140,6 +140,10 @@ body {
   pointer-events: none;
 }
 .expr { color: #310008; font-size: 84px; line-height: 1; letter-spacing: -1px; }
+/* Only the top strip of a covered card is visible, so its number lives there
+   instead of in the middle where the card below would hide it. */
+.card.header .face { place-items: start center; }
+.card.header .expr { font-size: 58px; margin-top: 10px; }
 .expr.small { font-size: 72px; }
 .expr.tiny { font-size: 60px; }
 .expr.solved { font-size: 104px; }
@@ -246,7 +250,7 @@ body {
   box-shadow: 0 6px 0 rgba(40,60,45,.16);
 }
 .dots {
-  position: absolute; left: 12px; right: 12px; bottom: 20px;
+  position: absolute; left: 12px; right: 12px; bottom: 14px;
   display: flex; justify-content: center; gap: 9px; flex-wrap: wrap;
 }
 .dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid rgba(196,231,199,.6); }
@@ -397,3 +401,7 @@ body {
   from { transform: translateY(-60px) rotate(0deg); opacity: 1; }
   to   { transform: translateY(2400px) rotate(720deg); opacity: 0; }
 }
+
+/* Inside a foundation the progress dots own the bottom strip, so the
+   "0 / 8" line sits above them rather than on top of them. */
+.slot .gold-quota { bottom: 56px; }

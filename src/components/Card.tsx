@@ -10,6 +10,8 @@ export interface CardViewProps {
   z?: number;
   /** Show the answer instead of the expression (matched stacks, calculator). */
   showValue?: boolean;
+  /** True when another card lies on top, so only the header strip shows. */
+  covered?: boolean;
   selected?: boolean;
   hinted?: boolean;
   shaking?: boolean;
@@ -19,9 +21,10 @@ export interface CardViewProps {
 }
 
 export function CardView({
-  card, faceDown, x, y, z = 0, showValue, selected, hinted, shaking, flipping, onClick, style,
+  card, faceDown, x, y, z = 0, showValue, covered, selected, hinted, shaking, flipping, onClick, style,
 }: CardViewProps) {
   const classes = ['card'];
+  if (covered && !faceDown) classes.push('header');
   if (selected) classes.push('selected');
   if (hinted) classes.push('hinted');
   if (shaking) classes.push('shaking');
