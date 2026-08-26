@@ -60,3 +60,40 @@ export function recordLoss(level: number): Progress {
 export function totalStars(p: Progress): number {
   return Object.values(p.stars).reduce((a, b) => a + b, 0);
 }
+
+/* ---------------------------------------------------------------- cheats */
+
+export function unlockAll(): Progress {
+  const p = load();
+  p.unlocked = TOTAL_LEVELS;
+  save(p);
+  return p;
+}
+
+export function starAll(): Progress {
+  const p = load();
+  for (let n = 1; n <= TOTAL_LEVELS; n++) p.stars[n] = 3;
+  p.unlocked = TOTAL_LEVELS;
+  save(p);
+  return p;
+}
+
+export function addCoins(amount: number): Progress {
+  const p = load();
+  p.coins = Math.max(0, p.coins + amount);
+  save(p);
+  return p;
+}
+
+export function setLives(lives: number): Progress {
+  const p = load();
+  p.lives = Math.max(0, Math.min(9, lives));
+  save(p);
+  return p;
+}
+
+export function resetAll(): Progress {
+  const p = blank();
+  save(p);
+  return p;
+}

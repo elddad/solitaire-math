@@ -95,11 +95,12 @@ interface MenuProps {
   onResume: () => void;
   onRestart: () => void;
   onLevels: () => void;
+  onCheats: () => void;
   onToggleSound: () => void;
   onToggleVibrate: () => void;
 }
 
-export function MenuPanel({ open, sound, vibrate, onResume, onRestart, onLevels, onToggleSound, onToggleVibrate }: MenuProps) {
+export function MenuPanel({ open, sound, vibrate, onResume, onRestart, onLevels, onCheats, onToggleSound, onToggleVibrate }: MenuProps) {
   if (!open) return null;
   return (
     <div className="scrim" onClick={onResume}>
@@ -116,6 +117,7 @@ export function MenuPanel({ open, sound, vibrate, onResume, onRestart, onLevels,
         <button className="btn" onClick={onResume}>RESUME</button>
         <button className="btn ghost" onClick={onRestart}>RESTART LEVEL</button>
         <button className="btn ghost" onClick={onLevels}>EXIT TO LEVELS</button>
+        <button className="btn cheat-entry" onClick={onCheats}>CHEATS</button>
       </div>
     </div>
   );

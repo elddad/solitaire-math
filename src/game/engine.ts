@@ -21,7 +21,9 @@ export type Action =
   /** Swap in a freshly dealt level. Built outside the reducer so the engine
       does not have to depend on the level dealer, which depends on the solver,
       which depends on the engine. */
-  | { type: 'replace'; state: GameState };
+  | { type: 'replace'; state: GameState }
+  /** Developer cheats. Applies a patch straight to the state. */
+  | { type: 'cheat'; patch: Partial<GameState> };
 
 let toastId = 0;
 
@@ -256,6 +258,15 @@ export function reducer(state: GameState, action: Action): GameState {
 
     case 'replace':
       return action.state;
+
+    case 'cheat': {
+      const next = { ...clone(state), ...action.patch };
+      // never let a cheat leave the board in an impossible state
+      next.moves = Math.max(0, next.moves);
+      next.movesMax = Math.max(next.moves, next.movesMax);
+      next.secondsLeft = Math.max(0, next.secondsLeft);
+      return next;
+    }
   }
 }
 

@@ -8,6 +8,7 @@ import { BoosterRow } from './components/Boosters';
 import { Hud } from './components/Hud';
 import { AdBanner, EndPanel, MenuPanel, Toast } from './components/Overlays';
 import { LevelSelect } from './components/LevelSelect';
+import { Cheats } from './components/Cheats';
 import * as Progress from './game/progress';
 import { TOTAL_LEVELS } from './game/campaign';
 import { SHOW_AD, STAGE_H, STAGE_W } from './layout';
@@ -16,6 +17,7 @@ const params = new URLSearchParams(location.search);
 /** Dev flags: ?level=n jumps straight to a level, ?seed=xyz fixes the shuffle. */
 const START_LEVEL = Math.max(1, Math.min(TOTAL_LEVELS, Number(params.get('level')) || 0));
 const SEED_OVERRIDE = params.get('seed') ?? undefined;
+const CHEAT_FLAG = params.get('cheats') === '1';
 
 function openingLevel(): number {
   if (START_LEVEL) return START_LEVEL;
@@ -29,6 +31,9 @@ export default function App() {
     newLevel(openingLevel(), SEED_OVERRIDE));
   const [menuOpen, setMenuOpen] = useState(false);
   const [levelsOpen, setLevelsOpen] = useState(false);
+  const [cheatsOpen, setCheatsOpen] = useState(CHEAT_FLAG);
+  const [reveal, setReveal] = useState(false);
+  const [showAd, setShowAd] = useState(SHOW_AD);
   const [sound, setSound] = useState(progress.sound);
   const [vibrate, setVibrate] = useState(progress.vibrate);
   const scored = useRef<number | null>(null);
@@ -53,7 +58,7 @@ export default function App() {
     };
   }, []);
 
-  const paused = menuOpen || levelsOpen || state.phase !== 'playing';
+  const paused = menuOpen || levelsOpen || cheatsOpen || state.phase !== 'playing';
   useEffect(() => {
     if (paused) return;
     const id = window.setInterval(() => dispatch({ type: 'tick' }), 1000);
@@ -207,10 +212,12 @@ export default function App() {
           coins={progress.coins} lives={progress.lives} secondsLeft={state.secondsLeft}
           level={state.level} moves={state.moves} movesMax={state.movesMax}
           onMenu={() => setMenuOpen(true)}
+          onLevelTap={() => setCheatsOpen(true)}
         />
         <Board
           state={state}
           showValues={!!state.calculatorUntil}
+          reveal={reveal}
           jokerArmed={jokerArmed}
           shakingId={shakingId}
           flippingIds={new Set()}
@@ -227,19 +234,34 @@ export default function App() {
           onMagnet={() => dispatch({ type: 'magnet' })}
           onCalculator={() => dispatch({ type: 'calculator' })}
         />
-        <AdBanner visible={SHOW_AD} />
+        <AdBanner visible={showAd} />
         <Toast toast={state.toast} />
         <EndPanel state={state} onNext={next} onReplay={replay} onMenu={() => setLevelsOpen(true)} />
         <MenuPanel
           open={menuOpen} sound={sound} vibrate={vibrate}
           onResume={() => setMenuOpen(false)}
           onRestart={replay}
+          onCheats={() => { setMenuOpen(false); setCheatsOpen(true); }}
           onLevels={() => { setMenuOpen(false); setLevelsOpen(true); }}
           onToggleSound={() => setSound((v) => { Progress.save({ ...progress, sound: !v }); return !v; })}
           onToggleVibrate={() => setVibrate((v) => { Progress.save({ ...progress, vibrate: !v }); return !v; })}
         />
         {levelsOpen && (
           <LevelSelect progress={progress} onPick={goToLevel} onClose={() => setLevelsOpen(false)} />
+        )}
+        {cheatsOpen && (
+          <Cheats
+            state={state}
+            progress={progress}
+            reveal={reveal}
+            showAd={showAd}
+            onProgress={setProgress}
+            onCheat={(patch) => dispatch({ type: 'cheat', patch })}
+            onGoToLevel={(n) => { setCheatsOpen(false); goToLevel(n); }}
+            onToggleReveal={() => setReveal((v) => !v)}
+            onToggleAd={() => setShowAd((v) => !v)}
+            onClose={() => setCheatsOpen(false)}
+          />
         )}
       </div>
     </div>

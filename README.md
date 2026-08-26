@@ -95,6 +95,27 @@ average and under 1 ms at worst**.
 `npm run verify` replays all 500 levels straight from the shipped manifest:
 **500/500 winnable, 0 equation errors**, averaging 18 spare moves.
 
+## Cheats menu
+
+For testing and for skipping ahead. Open it three ways:
+
+* **Menu → CHEATS**
+* **Tap the LEVEL label**
+* **`?cheats=1` in the URL**
+
+| | |
+|---|---|
+| **Jump** | Type any level 1-500 and go straight to it (unlocks everything on the way) |
+| **Unlock all 500** | Every level playable |
+| **3 stars on all** | Fills the level map |
+| **+10,000 coins / Refill lives** | Top up the meta-game |
+| **+50 moves / +5 minutes** | Extend the current level |
+| **Max boosters** | Nine of each, joker included |
+| **Win this level** | Ends it as a win, awarding stars and unlocking the next |
+| **X-ray cards** | Draws face-down cards face up. Purely visual - the rules still treat them as hidden |
+| **Ad banner** | Toggle the placeholder without editing the config |
+| **Reset progress** | Back to a fresh save on level 1 |
+
 ## Layout
 
 The whole interface is laid out on a fixed **1320 × 2868** reference canvas -
@@ -118,7 +139,7 @@ src/game/manifest.ts  GENERATED: the verified seed for every level
 src/game/level.ts     deal a level from the manifest, or verify one on the spot
 src/game/progress.ts  unlocked levels, stars and coins in localStorage
 src/layout.ts         every reference-canvas coordinate
-src/components/       Hud, Board, Boosters, Overlays, Card, Icons
+src/components/       Hud, Board, Boosters, Overlays, LevelSelect, Cheats, Card, Icons
 src/test/acceptance.ts  the acceptance test
 ```
 

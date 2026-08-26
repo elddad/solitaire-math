@@ -10,6 +10,8 @@ import {
 export interface BoardProps {
   state: GameState;
   showValues: boolean;
+  /** Cheat: draw face-down cards face up. Purely visual, rules are unchanged. */
+  reveal?: boolean;
   jokerArmed: boolean;
   shakingId: string | null;
   flippingIds: Set<string>;
@@ -94,7 +96,7 @@ function Foundations({ state, onTapFoundation, jokerArmed }: BoardProps) {
 }
 
 /* --------------------------------------------------------------- tableau */
-function Tableau({ state, showValues, onTapPile, shakingId, flippingIds }: BoardProps) {
+function Tableau({ state, showValues, reveal, onTapPile, shakingId, flippingIds }: BoardProps) {
   const available = TRAY_Y - 40 - TABLEAU_Y;
   return (
     <>
@@ -122,7 +124,7 @@ function Tableau({ state, showValues, onTapPile, shakingId, flippingIds }: Board
               />
             )}
             {column.cards.map((card, i) => {
-              const faceDown = i < column.downCount;
+              const faceDown = !reveal && i < column.downCount;
               const inGroup = i >= n - groupSize && groupSize > 0 && !faceDown;
               const source: Source = { from: 'column', col, count: n - i };
               const canLift = inGroup;

@@ -445,3 +445,39 @@ body {
 .levels-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 30px; }
 .levels-foot span { font-size: 46px; color: #FFE066; }
 .levels-foot .btn { width: 300px; margin: 0; }
+
+/* ------------------------------------------------------------- cheats */
+.scrim.cheats { align-items: center; }
+.cheats-panel {
+  width: 1080px; padding: 46px 44px 34px;
+  border-radius: 44px;
+  background: linear-gradient(180deg, #21384A, #14232F);
+  border: 8px solid #6FE3B0;
+  box-shadow: 0 18px 0 rgba(0,0,0,.45);
+  color: #E9FFF6; text-align: center;
+}
+.cheats-panel h2 { margin: 0; font-size: 66px; letter-spacing: 4px; color: #6FE3B0; }
+.cheat-sub { margin: 8px 0 26px; font-size: 34px; opacity: .8; }
+.cheat-jump { display: flex; gap: 16px; margin-bottom: 22px; }
+.cheat-jump input {
+  flex: 1; min-width: 0; height: 104px; border-radius: 22px;
+  border: 5px solid rgba(111,227,176,.5); background: #0C161E;
+  color: #E9FFF6; font-family: inherit; font-size: 52px; text-align: center;
+}
+.cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cheat-btn {
+  padding: 26px 14px; border: 0; border-radius: 22px; cursor: pointer;
+  font-family: inherit; font-size: 34px; line-height: 1.1;
+  background: linear-gradient(180deg, #2F5468, #1B3446);
+  color: #E9FFF6; box-shadow: 0 7px 0 #0D1E29;
+}
+.cheat-btn:active { transform: translateY(4px); box-shadow: 0 3px 0 #0D1E29; }
+.cheat-btn.go { flex: none; width: 260px; background: linear-gradient(180deg, #6FE3B0, #2FA97B); color: #08301F; box-shadow: 0 7px 0 #1B6B4C; }
+.cheat-btn.toggle.on { background: linear-gradient(180deg, #6FE3B0, #2FA97B); color: #08301F; box-shadow: 0 7px 0 #1B6B4C; }
+.cheat-btn.danger { background: linear-gradient(180deg, #E8635B, #B22F28); box-shadow: 0 7px 0 #7A1A15; }
+.cheat-hint { margin: 24px 0 0; font-size: 26px; opacity: .55; }
+.btn.cheat-entry {
+  background: linear-gradient(180deg, #6FE3B0, #2FA97B);
+  color: #08301F; box-shadow: 0 9px 0 #1B6B4C; font-size: 42px;
+}
+.btn.cheat-entry:active { box-shadow: 0 4px 0 #1B6B4C; }

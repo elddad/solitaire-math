@@ -9,6 +9,7 @@ interface Props {
   moves: number;
   movesMax: number;
   onMenu: () => void;
+  onLevelTap: () => void;
 }
 
 export function formatClock(seconds: number): string {
@@ -17,7 +18,7 @@ export function formatClock(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export function Hud({ coins, lives, secondsLeft, level, moves, movesMax, onMenu }: Props) {
+export function Hud({ coins, lives, secondsLeft, level, moves, movesMax, onMenu, onLevelTap }: Props) {
   const pct = Math.max(0, Math.min(100, (moves / movesMax) * 100));
   return (
     <>
@@ -25,7 +26,8 @@ export function Hud({ coins, lives, secondsLeft, level, moves, movesMax, onMenu 
       <div className="abs" style={{ left: 400, top: HUD_Y }}>
         <LivesPill lives={lives} clock={formatClock(secondsLeft)} />
       </div>
-      <div className="abs hud-text level-label" style={{ left: 806, top: HUD_Y + 24 }}>
+      <div className="abs hud-text level-label" style={{ left: 806, top: HUD_Y + 24, cursor: 'pointer' }}
+        onClick={onLevelTap}>
         LEVEL {level}
       </div>
       <button className="abs menu-btn" style={{ left: STAGE_W - 60 - 112, top: HUD_Y }} onClick={onMenu} aria-label="Menu">
