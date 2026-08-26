@@ -40,13 +40,21 @@ export function CardView({
         <GoldFace card={card} />
       ) : (
         <div className="face">
-          <span className={'expr' + (showValue ? ' solved' : (card.expression!.length > 4 ? ' small' : ''))}>
+          <span className={'expr' + sizeClass(card.expression!, showValue)}>
             {showValue ? card.value : card.expression}
           </span>
         </div>
       )}
     </div>
   );
+}
+
+/** Longer expressions step down a size so nothing crowds the card edge. */
+function sizeClass(expression: string, showValue?: boolean) {
+  if (showValue) return ' solved';
+  if (expression.length >= 5) return ' tiny';
+  if (expression.length === 4) return ' small';
+  return '';
 }
 
 function GoldFace({ card, progress }: { card: Card; progress?: number }) {

@@ -140,7 +140,8 @@ body {
   pointer-events: none;
 }
 .expr { color: #310008; font-size: 84px; line-height: 1; letter-spacing: -1px; }
-.expr.small { font-size: 66px; }
+.expr.small { font-size: 72px; }
+.expr.tiny { font-size: 60px; }
 .expr.solved { font-size: 104px; }
 
 /* red card back */
@@ -160,7 +161,9 @@ body {
   background: linear-gradient(168deg, #FFEE9B 0%, #FFC93F 46%, #EFA518 100%);
   border: 7px solid #B47A12;
   box-shadow: 0 8px 0 rgba(120,78,8,.30);
-  position: relative; overflow: hidden;
+  /* NB: .face already sets position:absolute/inset:0 at this same specificity.
+     Do not set position here -- it wins on order and collapses the card. */
+  overflow: hidden;
 }
 .gold .sparkle { position: absolute; inset: 0; opacity: .5; }
 .gold-diamond {
