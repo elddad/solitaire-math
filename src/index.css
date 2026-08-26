@@ -1,0 +1,396 @@
+/* ---------------------------------------------------------------- reset */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: #075E2A;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'Lilita One', 'Baloo 2', 'Arial Rounded MT Bold', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ------------------------------------------------------- stage scaling
+   The whole game is laid out on a fixed 1320x2868 reference canvas and then
+   scaled to fit, so every coordinate in layout.ts is the recording's own. */
+.viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background:
+    radial-gradient(70% 45% at 50% 38%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%),
+    #0C873C;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.stage {
+  position: relative;
+  width: 1320px;
+  height: 2868px;
+  flex: none;
+  transform-origin: top center;
+  background-image:
+    linear-gradient(rgba(94,190,119,.20) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(94,190,119,.20) 2px, transparent 2px);
+  background-size: 122px 122px, 122px 122px;
+}
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(58% 34% at 50% 40%, rgba(255,255,255,.11), rgba(255,255,255,0) 72%);
+}
+
+.abs { position: absolute; }
+
+/* ------------------------------------------------------------------ hud */
+.hud-text { color: #fff; text-shadow: 0 3px 0 rgba(4,64,29,.55); }
+
+.pill {
+  display: flex; align-items: center; gap: 14px;
+  height: 104px; padding: 0 34px 0 8px;
+  border-radius: 999px;
+  background: rgba(3,72,32,.55);
+  border: 5px solid rgba(255,255,255,.30);
+  color: #fff; font-size: 52px; line-height: 1;
+  text-shadow: 0 3px 0 rgba(4,64,29,.55);
+}
+.pill .plus {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(180deg, #6ee27f, #2fae4e);
+  border: 4px solid #fff; color: #08421f; font-size: 30px;
+  display: grid; place-items: center; margin-left: 6px;
+  box-shadow: 0 3px 0 rgba(0,0,0,.25);
+}
+.pill .timer { font-size: 40px; opacity: .95; margin-left: 4px; }
+
+.coin {
+  width: 88px; height: 88px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 35% 30%, #ffe98a, #f5b423 60%, #d2860c);
+  border: 5px solid #fff3c4;
+  display: grid; place-items: center;
+  box-shadow: inset 0 -6px 0 rgba(160,90,0,.35);
+}
+.coin svg { width: 52px; height: 52px; }
+
+.heart { width: 84px; height: 84px; flex: none; }
+
+.menu-btn {
+  width: 112px; height: 112px; border-radius: 50%;
+  background: #fff; border: 0; cursor: pointer;
+  display: grid; place-content: center; gap: 12px;
+  box-shadow: 0 8px 0 rgba(3,60,27,.35);
+  padding: 0;
+}
+.menu-btn i { display: block; width: 52px; height: 10px; border-radius: 6px; background: #12693A; }
+.menu-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 rgba(3,60,27,.35); }
+
+.level-label { font-size: 60px; letter-spacing: 1px; }
+
+/* ------------------------------------------------------------ moves bar */
+.moves-label { font-size: 52px; }
+.moves-track {
+  position: relative; height: 76px; border-radius: 999px;
+  background: #0A5C2C; border: 5px solid rgba(4,64,29,.5);
+  overflow: hidden;
+}
+.moves-fill {
+  position: absolute; inset: 0 auto 0 0;
+  background: linear-gradient(180deg, #98e05c, #77C93E);
+  border-radius: 999px;
+  transition: width .28s ease-out;
+}
+.moves-count {
+  position: absolute; top: 0; height: 100%; display: flex; align-items: center;
+  font-size: 44px; color: #0b3f1e; text-shadow: 0 2px 0 rgba(255,255,255,.35);
+  transition: right .28s ease-out;
+}
+
+/* ---------------------------------------------------------------- cards */
+.card {
+  position: absolute;
+  width: 255px; height: 345px;
+  border-radius: 25px;
+  transition: transform .29s cubic-bezier(.22,.72,.28,1), opacity .22s ease;
+  will-change: transform;
+  cursor: pointer;
+}
+.card.static { cursor: default; }
+
+.face, .back {
+  position: absolute; inset: 0;
+  border-radius: 25px;
+  display: grid; place-items: center;
+  backface-visibility: hidden;
+}
+
+/* white equation card */
+.face {
+  background: linear-gradient(178deg, #FFFDF9 0%, #FBF6EE 62%, #F6E9E4 100%);
+  border: 7px solid #FFFFFF;
+  box-shadow: 0 8px 0 rgba(40,60,45,.16), 0 2px 0 rgba(0,0,0,.05);
+}
+.face::after {
+  content: ''; position: absolute; inset: 5px;
+  border-radius: 18px; border: 3px solid rgba(0,0,0,.07);
+  pointer-events: none;
+}
+.expr { color: #310008; font-size: 84px; line-height: 1; letter-spacing: -1px; }
+.expr.small { font-size: 66px; }
+.expr.solved { font-size: 104px; }
+
+/* red card back */
+.back {
+  background: #DD2442;
+  border: 9px solid #FBF3E6;
+  box-shadow: 0 8px 0 rgba(40,60,45,.18);
+}
+.back::before {
+  content: ''; position: absolute; inset: 14px;
+  border-radius: 14px; border: 4px solid rgba(255,140,150,.55);
+}
+.back-mark { width: 130px; height: 130px; opacity: .5; }
+
+/* gold category card */
+.gold {
+  background: linear-gradient(168deg, #FFEE9B 0%, #FFC93F 46%, #EFA518 100%);
+  border: 7px solid #B47A12;
+  box-shadow: 0 8px 0 rgba(120,78,8,.30);
+  position: relative; overflow: hidden;
+}
+.gold .sparkle { position: absolute; inset: 0; opacity: .5; }
+.gold-diamond {
+  position: absolute; left: 50%; top: 46%;
+  width: 178px; height: 178px; margin: -100px 0 0 -89px;
+  border: 6px solid rgba(255,251,214,.9);
+  border-radius: 16px;
+  transform: rotate(45deg);
+}
+.gold-value {
+  position: absolute; left: 0; right: 0; top: 46%;
+  transform: translateY(-50%);
+  text-align: center; font-size: 108px; line-height: 1;
+  color: #5A3400; text-shadow: 0 3px 0 rgba(255,255,255,.5);
+}
+.gold-quota {
+  position: absolute; left: 0; right: 0; bottom: 22px;
+  text-align: center; font-size: 46px; color: #5A3400;
+  text-shadow: 0 2px 0 rgba(255,255,255,.45);
+}
+
+/* selection + feedback */
+.card.selected .face,
+.card.selected .gold {
+  outline: 10px solid #C6F04B;
+  outline-offset: -4px;
+  box-shadow: 0 0 34px 8px rgba(214,240,90,.55), 0 8px 0 rgba(40,60,45,.16);
+}
+.card.selected { transform-origin: center; }
+.card.hinted .face, .card.hinted .gold {
+  outline: 10px solid #FFE066;
+  outline-offset: -4px;
+  animation: hintPulse 1s ease-in-out infinite;
+}
+@keyframes hintPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,224,102,.7);} 50% { box-shadow: 0 0 30px 10px rgba(255,224,102,.55);} }
+.card.shaking { animation: shake .32s ease; }
+@keyframes shake {
+  0%,100% { margin-left: 0; } 20% { margin-left: -20px; }
+  50% { margin-left: 18px; } 80% { margin-left: -10px; }
+}
+.card.dealing { animation: dealIn .3s ease-out both; }
+@keyframes dealIn { from { opacity: 0; transform: translateY(-40px) scale(.9); } }
+.card.flipping .face, .card.flipping .gold { animation: flipIn .26s ease-out both; }
+@keyframes flipIn { from { transform: rotateY(90deg); } to { transform: rotateY(0); } }
+
+/* ---------------------------------------------------------- foundations */
+.slot {
+  position: absolute;
+  width: 255px; height: 350px;
+  border-radius: 28px;
+  background: #155F31;
+  box-shadow: inset 0 6px 0 rgba(0,0,0,.20), inset 0 -8px 0 rgba(255,255,255,.05),
+              0 8px 0 rgba(4,60,28,.35);
+  cursor: pointer;
+}
+.slot.droppable { box-shadow: inset 0 0 0 7px #C6F04B, 0 8px 0 rgba(4,60,28,.35); }
+.slot.completing { animation: setDone 1.2s ease-in-out forwards; }
+@keyframes setDone {
+  0%   { transform: scale(1); filter: brightness(1); }
+  18%  { transform: scale(1.07); filter: brightness(1.5); }
+  45%  { transform: scale(1.02); }
+  70%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(.7); opacity: 0; }
+}
+
+.found-tab {
+  position: absolute; left: 14px; right: 14px; top: 12px; height: 66px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #FFE785, #F0A81B);
+  color: #5A3400; font-size: 44px; line-height: 66px; text-align: center;
+  box-shadow: 0 4px 0 rgba(120,78,8,.35);
+}
+.found-top {
+  position: absolute; left: 10px; right: 10px; top: 86px; bottom: 74px;
+  border-radius: 20px;
+  background: linear-gradient(178deg, #FFFDF9, #F6E9E4);
+  border: 6px solid #fff;
+  display: grid; place-items: center;
+  color: #310008; font-size: 96px;
+  box-shadow: 0 6px 0 rgba(40,60,45,.16);
+}
+.dots {
+  position: absolute; left: 12px; right: 12px; bottom: 20px;
+  display: flex; justify-content: center; gap: 9px; flex-wrap: wrap;
+}
+.dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid rgba(196,231,199,.6); }
+.dot.on { background: #7BE04A; border-color: #B6F58F; box-shadow: 0 0 10px rgba(123,224,74,.8); }
+
+.spark {
+  position: absolute; width: 22px; height: 22px; pointer-events: none;
+  color: #FFE066;
+  animation: sparkFly .85s ease-out forwards;
+}
+@keyframes sparkFly {
+  from { transform: translate(0,0) scale(.4); opacity: 1; }
+  to   { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: 0; }
+}
+
+/* ----------------------------------------------------------------- tray */
+.tray {
+  position: absolute;
+  border-radius: 32px;
+  background: #155F31;
+  box-shadow: inset 0 6px 0 rgba(0,0,0,.18), 0 8px 0 rgba(4,60,28,.32);
+}
+.stock-count {
+  position: absolute;
+  min-width: 92px; height: 62px; padding: 0 16px;
+  border-radius: 14px;
+  background: #FBF3E6; color: #23421f;
+  font-size: 42px; line-height: 62px; text-align: center;
+  box-shadow: 0 5px 0 rgba(0,0,0,.25);
+}
+.restore-btn {
+  position: absolute;
+  width: 255px; height: 345px; border-radius: 25px;
+  background: #0E4A26; border: 6px solid rgba(255,255,255,.22);
+  color: #B9F0C6; cursor: pointer;
+  display: grid; place-items: center; gap: 6px; padding: 0;
+  font-family: inherit;
+}
+.restore-btn svg { width: 108px; height: 108px; }
+.restore-btn span { font-size: 38px; line-height: 1.05; display: block; text-align: center; }
+.restore-btn:active { transform: translateY(4px); }
+
+.joker-badge {
+  position: absolute; width: 76px; height: 76px; border-radius: 50%;
+  background: linear-gradient(180deg, #FFE785, #EFA518);
+  border: 5px solid #fff; color: #5A3400;
+  font-size: 40px; display: grid; place-items: center;
+  box-shadow: 0 4px 0 rgba(0,0,0,.28);
+}
+
+/* ------------------------------------------------------------- boosters */
+.booster {
+  position: absolute;
+  width: 208px; height: 208px; border-radius: 34px;
+  background: linear-gradient(180deg, #ffffff, #EDF3EE);
+  border: 8px solid #14584A;
+  box-shadow: 0 10px 0 #0E3F35;
+  cursor: pointer; padding: 0;
+  display: grid; place-items: center;
+  transition: transform .08s, box-shadow .08s, filter .2s;
+}
+.booster:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 4px 0 #0E3F35; }
+.booster:disabled { filter: grayscale(1); opacity: .55; cursor: default; }
+.booster.armed { box-shadow: 0 0 0 8px #C6F04B, 0 10px 0 #0E3F35; }
+.booster svg { width: 132px; height: 132px; }
+.booster .count {
+  position: absolute; right: -14px; bottom: -14px;
+  width: 68px; height: 68px; border-radius: 50%;
+  background: #E8362F; border: 6px solid #fff; color: #fff;
+  font-size: 38px; display: grid; place-items: center;
+  box-shadow: 0 4px 0 rgba(0,0,0,.25);
+}
+
+/* ------------------------------------------------------------------ ad */
+.ad {
+  position: absolute; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #10331F; color: rgba(255,255,255,.4);
+  font-size: 40px; letter-spacing: 2px;
+  border-top: 4px solid rgba(255,255,255,.08);
+}
+
+/* --------------------------------------------------------------- toast */
+.toast {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  max-width: 75%; padding: 26px 44px;
+  border-radius: 28px;
+  background: rgba(6,52,26,.90);
+  border: 4px solid rgba(255,255,255,.16);
+  color: #fff; font-size: 42px; line-height: 1.25; text-align: center;
+  animation: toastIn .18s ease-out;
+  pointer-events: none;
+}
+.toast.leaving { animation: toastOut .25s ease-in forwards; }
+@keyframes toastIn  { from { opacity: 0; transform: translate(-50%, 14px); } }
+@keyframes toastOut { to   { opacity: 0; transform: translate(-50%, -8px); } }
+
+/* --------------------------------------------------------------- modals */
+.scrim {
+  position: absolute; inset: 0; z-index: 60;
+  background: rgba(4,40,20,.72);
+  display: grid; place-items: center;
+  animation: fade .2s ease-out;
+}
+@keyframes fade { from { opacity: 0; } }
+.panel {
+  width: 900px; padding: 64px 56px;
+  border-radius: 48px;
+  background: linear-gradient(180deg, #199A4F, #0C6E36);
+  border: 8px solid rgba(255,255,255,.25);
+  box-shadow: 0 20px 0 rgba(3,45,22,.5);
+  color: #fff; text-align: center;
+  animation: panelIn .24s cubic-bezier(.2,.9,.3,1.1);
+}
+@keyframes panelIn { from { opacity: 0; transform: translateY(40px) scale(.94); } }
+.panel h2 { margin: 0 0 12px; font-size: 84px; letter-spacing: 1px; }
+.panel .row {
+  display: flex; justify-content: space-between;
+  font-size: 46px; padding: 20px 8px;
+  border-bottom: 3px dashed rgba(255,255,255,.22);
+}
+.panel .row:last-of-type { border-bottom: 0; }
+.panel .row b { color: #FFE066; }
+.btn {
+  display: block; width: 100%; margin-top: 26px;
+  padding: 30px; border: 0; border-radius: 28px;
+  font-family: inherit; font-size: 50px; cursor: pointer;
+  background: linear-gradient(180deg, #FFE785, #F0A81B);
+  color: #5A3400; box-shadow: 0 9px 0 #B47A12;
+}
+.btn.ghost { background: linear-gradient(180deg, #3BC06E, #1E8A48); color: #fff; box-shadow: 0 9px 0 #10592D; }
+.btn:active { transform: translateY(5px); box-shadow: 0 4px 0 #B47A12; }
+.btn.ghost:active { box-shadow: 0 4px 0 #10592D; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 46px; padding: 18px 8px; }
+.switch {
+  width: 128px; height: 66px; border-radius: 999px; border: 0;
+  background: #0A4C25; cursor: pointer; position: relative; padding: 0;
+}
+.switch.on { background: #4CC46F; }
+.switch i { position: absolute; top: 7px; left: 7px; width: 52px; height: 52px; border-radius: 50%; background: #fff; transition: left .18s; }
+.switch.on i { left: 69px; }
+
+.confetti {
+  position: absolute; width: 26px; height: 34px; border-radius: 5px;
+  animation: fall 2.2s linear forwards;
+}
+@keyframes fall {
+  from { transform: translateY(-60px) rotate(0deg); opacity: 1; }
+  to   { transform: translateY(2400px) rotate(720deg); opacity: 0; }
+}

@@ -1,106 +1,110 @@
-# Solitaire Math
+# Math Category Solitaire
 
-Solitaire played with equations. The pile shows a number; every board card shows a sum.
-Work out a card's answer and, if it equals the number on the pile, stack it there — the
-card flips to its answer, and that answer becomes the number to match next.
+A solitaire-style arithmetic sorting game. Every white card is an expression, and
+its **answer is its category**: `16-2` and `7+7` are both category **14**; `2X4`
+and `8X1` are both **8**; `18/2` and `3X3` are both **9**.
 
-**600 levels**, every one guaranteed solvable. No build step, no dependencies, no assets:
-plain HTML, CSS and JavaScript that runs straight from GitHub Pages.
+Uncover gold category cards, seat them in the four foundation slots, then fill
+each one with the number of matching cards its quota demands.
+
+It is not Klondike. There are no suits, no colours, no ascending runs.
 
 ```
-board:   [3×3]  [12−4]  [4+5]  [2×7]        pile: ( 9 )
-                                            tap 3×3 → it lands as 9
+foundations   [ 14  3/6 ]  [ 8  0/8 ]  [    ]  [    ]
+
+tableau        16-2         7+7         2X4     18/2
+               ^ tap to select, tap a destination to place
 ```
 
-## Play it
-
-Open `index.html` in a browser — that is genuinely all it needs. To serve it locally:
+## Run it
 
 ```bash
-node serve.js
+npm install
+npm run dev
 ```
 
-Then visit http://localhost:5173.
-
-## Put it on GitHub Pages
+Then open http://localhost:5173. `?seed=anything` deals a different board;
+the default `recording` seed reproduces the reference layout exactly.
 
 ```bash
-git init
-git add .
-git commit -m "Solitaire Math"
-git branch -M main
-git remote add origin https://github.com/<you>/<repo>.git
-git push -u origin main
+npm run accept     # the full 16-section acceptance test
+npm run build      # production build into docs/
 ```
 
-Then **Settings → Pages → Source: Deploy from a branch**, branch `main`, folder
-`/ (root)`. The included `.nojekyll` stops Jekyll from touching the files. Nothing has to
-build, so the site is live a minute later at `https://<you>.github.io/<repo>/`, and every
-push to `main` republishes it.
-
-## How the game works
+## How it plays
 
 | | |
 |---|---|
-| **Free cards** | A card can only be played when nothing lies on top of it. Covered cards are dimmed but still readable, so you can plan ahead. |
-| **The pile** | Shows the number to match. Stack a card whose answer equals it. |
-| **The stock** | Tap it for a new pile number when nothing on the board matches. It resets your combo, so draw only when you have to. |
-| **Gold cards** | Wild. Play one on any number, and play any number on it. |
-| **Combo** | Each card played without drawing is worth more, up to 800. Every unused stock card pays 150 when you clear the board. |
-| **Stars** | One for clearing it, three for beating par. Par is set from the level's own built-in solution, so it is always reachable. |
-| **Undo** | Unlimited and free. Lose three times and the level offers a skip. |
+| **Select** | Tap a card or a matched group. It gets a yellow-green outline. Tap it again to let go. |
+| **Place** | Tap a destination. An illegal move shakes, explains itself, and costs nothing. |
+| **Stack** | A card goes on any exposed card with the same answer. Same-answer runs move as one unit for one move. |
+| **Foundations** | Only a gold category card opens a slot. After that it takes matching cards until its quota is full, then clears itself and frees the slot. |
+| **Stock** | Tap to turn a card over. When it empties, `RESTORE STOCK` recycles the waste so the level stays solvable. |
+| **Joker** | Fills one gap in any open set. Three of them, and they cost no move. |
+| **Boosters** | Hint, Undo, Magnet (sweep every exposed card that can go home), Calculator (show answers for five seconds). Three each. |
 
-Keyboard: `space` draw · `u` undo · `h` hint · `r` restart · `esc` back.
+Every successful action costs one move. Level 5 gives 125 moves and 25 minutes.
 
-## The twelve worlds
+## The move budget is the real puzzle
 
-| Levels | World | Maths |
-|---|---|---|
-| 1–50 | Addition | `a + b` |
-| 51–100 | Subtraction | `a − b` |
-| 101–150 | Plus & Minus | both |
-| 151–200 | Times Tables | `a × b` |
-| 201–250 | Division | `a ÷ b` |
-| 251–300 | Times & Share | `×` and `÷` |
-| 301–350 | All Four | every operation |
-| 351–400 | Big Numbers | two-digit sums |
-| 401–450 | Two Steps | `a + b − c` |
-| 451–500 | Mixed Steps | `a × b + c` |
-| 501–550 | Number Master | everything, mixed |
-| 551–600 | Grand Master | no mercy |
+A 64-card deal has a hard floor: 42 stock cards each need a draw, and all 64
+cards need at least one move to place. That is **106 moves before a single card
+is re-handled**, against a budget of 125. Only about 19 moves of slack exist for
+parking cards and reopening the stock.
 
-## How the levels are built
+That makes many shuffles genuinely unwinnable. Measured over 30 random shuffles,
+only **16 could be finished** inside 125 moves.
 
-Levels are not stored — each one is generated from its number by a seeded RNG, so level 437
-is the same board for everyone, on every device, from about 40 KB of code.
+So the level does not trust a shuffle. `src/game/level.ts` deals, runs a solver
+over the result, and keeps the first shuffle the solver can finish — searching
+variants of the seed until it finds one with moves to spare. Same seed, same
+board, every time, and **every board that reaches a player is provably
+winnable** (30/30 after the search, averaging 15 moves to spare). The reference
+deal is cleared in 111 of its 125 moves.
 
-Generation runs **backwards from a solution**. It picks a legal order to clear the board,
-walks that order assigning each card a value, and inserts a stock draw or a gold card
-whenever the target number changes. Because the sequence is built before the numbers are,
-a winning line always exists — there are no unsolvable deals. `js/levels.js` also records
-that line, which is what the three-star par is measured against.
+The pinned cards from the brief survive the search: the exposed row is always
+`16-2 / 7+7 / 2X4 / 18/2`, the gold category-15 card always sits directly under
+`16-2`, and the stock always starts `8X1`, gold-10, `15-3`.
 
-Difficulty is tuned rather than guessed. `js/layouts.js` measures how many cards each board
-shape leaves free at once (1.6 for the deep `Cross`, 5.1 for the flat `Long Rows`), and the
-level tuning reads that number: a board that frees fewer cards uses fewer distinct numbers,
-so a drawn number is still likely to have a match. The stock sizes in `SPARE` were
-calibrated by running a greedy bot over all 600 levels until each world hit its intended
-win rate — from ~100% in Addition down to ~72% in Grand Master, before undo and hints.
+## Layout
 
-## Layout of the code
+The whole interface is laid out on a fixed **1320 × 2868** reference canvas -
+the recording's own portrait resolution - and scaled with a single transform to
+fit the screen, capped at 520 CSS px wide. Every coordinate in `src/layout.ts`
+is a reference pixel, so the design cannot drift as it scales. The four columns
+never reflow into rows, and the page never scrolls during play.
+
+## Code map
 
 ```
-index.html        markup for the three screens
-css/style.css     everything visual
-js/rng.js         seeded RNG -- levels are reproducible from their number
-js/layouts.js     board shapes as ASCII art, plus the free-card metric
-js/math.js        equation builders and the answer-matching rule
-js/levels.js      world tuning and the backwards level generator
-js/game.js        game state: free cards, play, draw, undo, scoring
-js/storage.js     progress in localStorage
-js/audio.js       WebAudio blips, no sound files
-js/ui.js          rendering, input, animation, overlays
-serve.js          optional local static server
+src/game/types.ts     Card, Column, Foundation, GameState
+src/game/rng.ts       seeded shuffle
+src/game/deck.ts      the level 5 deck, the equation pool, the deal
+src/game/rules.ts     group detection and every move validation
+src/game/engine.ts    the reducer: one action in, new state out
+src/game/solver.ts    heuristic player used to verify a deal (not shipped logic)
+src/game/level.ts     deal, verify, retry until the board is winnable
+src/layout.ts         every reference-canvas coordinate
+src/components/       Hud, Board, Boosters, Overlays, Card, Icons
+src/test/acceptance.ts  the acceptance test
 ```
 
-There is no framework and no build. Editing a file and reloading is the whole loop.
+State is a single serializable object, so undo is a snapshot stack and the whole
+board can be dropped into JSON.
+
+## Deploying
+
+The build writes to `docs/`, and GitHub Pages serves `main` → `/docs`. Push and
+it republishes:
+
+```bash
+npm run build
+git add -A && git commit -m "..." && git push
+```
+
+## Notes
+
+* All artwork - coins, hearts, joker, boosters, card backs - is original CSS and
+  inline SVG. No emoji are used as game icons.
+* The banner region is a neutral `Ad placeholder`. Set `SHOW_AD = false` in
+  `src/layout.ts` to remove it; the layout stays aligned either way.
