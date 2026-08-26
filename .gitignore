@@ -1,0 +1,7 @@
+# editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp
+
+# local Claude Code launch config (paths are machine-specific)
+.claude/

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b3a2c">
+<meta name="description" content="Solitaire Math - 600 levels of equation solitaire. Every card is a sum: work out its answer and stack it on the pile that shows that number.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Solitaire Math - 600 Number Puzzles</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b3a2c'/%3E%3Crect x='14' y='10' width='36' height='46' rx='6' fill='%23fff'/%3E%3Ctext x='32' y='45' font-size='34' font-family='Georgia' text-anchor='middle' fill='%23c62828'%3E7%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ================= HOME ================= -->
+  <section id="screen-home" class="screen is-active">
+    <div class="home">
+      <div class="logo">
+        <div class="logo-fan">
+          <span class="mini red">3&times;3</span><span class="mini">9</span><span class="mini red">4+5</span>
+        </div>
+        <h1>Solitaire <em>Math</em></h1>
+        <p class="tagline">600 equation puzzles &middot; every one solvable</p>
+      </div>
+
+      <button class="btn btn-primary" id="btn-continue">
+        <span>Play</span><b id="home-level">Level 1</b>
+      </button>
+
+      <div class="home-row">
+        <button class="btn" id="btn-levels">Levels</button>
+        <button class="btn" id="btn-how">How to play</button>
+      </div>
+
+      <div class="home-stats">
+        <div><b id="stat-stars">0</b><span>stars</span></div>
+        <div><b id="stat-cleared">0</b><span>cleared</span></div>
+        <div><b id="stat-best">0</b><span>best score</span></div>
+      </div>
+
+      <div class="home-foot">
+        <button class="icon-btn" id="btn-sound" title="Sound on/off">&#128266;</button>
+        <button class="icon-btn" id="btn-reset" title="Reset all progress">&#8635;</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LEVEL SELECT ================= -->
+  <section id="screen-levels" class="screen">
+    <header class="topbar">
+      <button class="icon-btn" data-nav="home" title="Back">&#8249;</button>
+      <div class="topbar-title" id="levels-title">Levels</div>
+      <div class="topbar-right"><span id="levels-stars">0</span> &#9733;</div>
+    </header>
+    <nav class="worlds" id="worlds"></nav>
+    <div class="level-grid-wrap"><div class="level-grid" id="level-grid"></div></div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section id="screen-game" class="screen">
+    <header class="hud">
+      <button class="icon-btn" data-nav="levels" title="Back to levels">&#8249;</button>
+      <div class="hud-mid">
+        <div class="hud-level" id="hud-level">Level 1</div>
+        <button class="rule-badge" id="hud-rule" title="What is the rule?">+1 / -1</button>
+      </div>
+      <div class="hud-score">
+        <b id="hud-score">0</b>
+        <span id="hud-combo"></span>
+      </div>
+    </header>
+
+    <div class="table-wrap" id="table-wrap">
+      <div class="table" id="table"></div>
+    </div>
+
+    <footer class="tools">
+      <button class="tool" id="btn-undo"><i>&#8630;</i><span>Undo</span></button>
+      <button class="tool" id="btn-hint"><i>&#9788;</i><span>Hint <b id="hint-count">3</b></span></button>
+      <button class="tool" id="btn-restart"><i>&#10227;</i><span>Restart</span></button>
+      <button class="tool" id="btn-rule"><i>?</i><span>Rule</span></button>
+    </footer>
+  </section>
+
+</div>
+
+<div class="overlay" id="overlay" hidden><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/rng.js"></script>
+<script src="js/layouts.js"></script>
+<script src="js/math.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
